@@ -1,32 +1,42 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+
 using namespace std;
 
-struct memory_fragment {
+struct mem_block {
     void* pointer;
     size_t size;
 };
 
-vector<memory_fragment> taken_memory; // lists the taken pointers
+vector<mem_block> taken_memory;
 
 void* mem_alloc(size_t);
 void* mem_realloc(void*, size_t);
 void mem_free(void*, bool with_output=true);
 size_t round_up_size(size_t);
 int* get_address(size_t, int* start_pointer=nullptr);
-void mem_dump();
+void mem_dump(); //func shows status of memory block
 
 
 int main() {
+    cout << "Try allocate memory. Size:5" << endl;
     void* old_pointer = mem_alloc(5);
+
+    cout << "Try allocate memory. Size:12" << endl;
     void* another_pointer = mem_alloc(12);
+
+    cout << "Try resize memory blok Size:5 to Size:8" << endl;
     void* new_pointer = mem_realloc(old_pointer, 8);
+
+    cout << "Try allocate memory. Size:4" << endl;
     void* last_pointer = mem_alloc(4);
+
+    cout << "Try to free up memory block. Size:8" << endl;
     mem_free(new_pointer);
 }
 
-// Allocating memory
+// allocates a block of memory
 void* mem_alloc(size_t size) {
     size_t size_to_allocate = round_up_size(size);
     void* ptr = static_cast<void*>(get_address(size_to_allocate));
@@ -34,26 +44,25 @@ void* mem_alloc(size_t size) {
     if (ptr == nullptr) {
         return nullptr;
     }
-    memory_fragment fragment{ptr, size_to_allocate};
+    mem_block fragment{ptr, size_to_allocate};
     cout << "The memory was allocated at " << ptr << endl;
     taken_memory.push_back(fragment);
     mem_dump();
     return static_cast<void*>(ptr);
 }
 
-// Reallocating memory
+
+//resize the block
 void* mem_realloc(void* addr, size_t size) {
     size_t size_to_allocate = round_up_size(size);
 	for (auto element : taken_memory) {
 		if (element.pointer == addr) {
-			// if the size is the same or less, there's no need in reallocating
 			if (element.size >= size_to_allocate) {
 				element.size = size_to_allocate;
 				cout << "The memory was reallocated at " << element.pointer << " (the same address)" << endl;
 				mem_dump();
 				return element.pointer;
 			}
-			// otherwise, it searches for other memory, while clearing the existing memory
 			void* ptr = static_cast<void*>(get_address(size_to_allocate, static_cast<int*>(addr)));
 			int* values = new (ptr) int[size_to_allocate / 4];
 			int* previous_values = static_cast<int*>(addr);
@@ -67,7 +76,7 @@ void* mem_realloc(void* addr, size_t size) {
 				return nullptr;
 			}
 			mem_free(addr, false);
-			memory_fragment fragment{ ptr, size_to_allocate };
+			mem_block fragment{ ptr, size_to_allocate };
 			cout << "The memory was reallocated at " << ptr << endl;
 			taken_memory.push_back(fragment);
 			mem_dump();
@@ -76,9 +85,8 @@ void* mem_realloc(void* addr, size_t size) {
 	}
 }
 
-// Freeing memory
-// (The second param is there because we don't need output
-// when this function is part of reallocating the memory)
+
+//makes block of memory free
 void mem_free(void* addr, bool with_output) {
     int *a = static_cast<int*>(addr);
     for (int i = 0; i < taken_memory.size(); i++) {
@@ -92,7 +100,7 @@ void mem_free(void* addr, bool with_output) {
     }
 }
 
-// Rounding up the number of bytes (as it should divide by 4 without residual)
+//makes a block a word size //word=4bytes
 size_t round_up_size(size_t original_size) {
     size_t new_size = original_size;
     if (original_size % 4 != 0) {
@@ -101,12 +109,8 @@ size_t round_up_size(size_t original_size) {
     return new_size;
 }
 
-// Getting the address that follows the requirements
-// For example, the number of bytes reserved
-// should be equal to the value of size variable
+//func get address of memory block
 int* get_address(size_t size, int* start_pointer) {
-    // the program will start searching the address to allocate memory
-    // from the address of prime_variable, if it's not mentioned in params
     int * possible_pointer;
     if (start_pointer == nullptr) {
         int prime_variable = 0;
@@ -114,19 +118,18 @@ int* get_address(size_t size, int* start_pointer) {
     }
     else {
         possible_pointer = start_pointer;
-        for (auto & memory_fragment : taken_memory) {
-            if (memory_fragment.pointer == start_pointer) {
-                possible_pointer += memory_fragment.size;
+        for (auto & mem_block : taken_memory) {
+            if (mem_block.pointer == start_pointer) {
+                possible_pointer += mem_block.size;
                 break;
             }
         }
     }
-    // searching for an address that doesn't overlap with anything else
     while (true) {
         bool nothing_overlaps = true;
-        for (auto & memory_fragment : taken_memory) {
-            if (memory_fragment.pointer < possible_pointer + size
-            && memory_fragment.pointer > possible_pointer - memory_fragment.size) {
+        for (auto & mem_block : taken_memory) {
+            if (mem_block.pointer < possible_pointer + size
+            && mem_block.pointer > possible_pointer - mem_block.size) {
                 nothing_overlaps = false;
                 break;
             }
@@ -140,7 +143,8 @@ int* get_address(size_t size, int* start_pointer) {
     }
 }
 
-// Outputting the memory statistics
+
+//func shows status of memory block
 void mem_dump() {
     cout << "Currently taken memory:";
     if (taken_memory.empty()) {
