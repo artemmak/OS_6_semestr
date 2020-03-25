@@ -4,6 +4,7 @@
 
 using namespace std;
 
+//block type
 struct mem_block {
     void* pointer;
     size_t size;
