@@ -11,13 +11,12 @@ struct mem_block {
 
 vector<mem_block> taken_memory;
 
-void* mem_alloc(size_t);
-void* mem_realloc(void*, size_t);
-void mem_free(void*, bool with_output=true);
-size_t round_up_size(size_t);
-int* get_address(size_t, int* start_pointer=nullptr);
+void* mem_alloc(size_t);// allocates a block of memory
+void* mem_realloc(void*, size_t);//resize the block
+void mem_free(void*, bool with_output=true);//makes block of memory free
+size_t round_up_size(size_t);//makes a block a word size //word=4bytes
+int* get_address(size_t, int* start_pointer=nullptr);//func get address of memory blockgi
 void mem_dump(); //func shows status of memory block
-
 
 int main() {
     cout << "Try allocate memory. Size:5" << endl;
