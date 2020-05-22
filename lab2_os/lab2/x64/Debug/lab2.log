@@ -1,0 +1,3 @@
+﻿  lab1.cpp
+C:\Users\qwerty\Downloads\Telegram Desktop\lab2_os\lab2_os\lab2\lab1.cpp(119,50): warning C4267: аргумент: преобразование из "size_t" в "int"; возможна потеря данных
+  lab2.vcxproj -> C:\Users\qwerty\Downloads\Telegram Desktop\lab2_os\lab2_os\x64\Debug\lab2.exe
